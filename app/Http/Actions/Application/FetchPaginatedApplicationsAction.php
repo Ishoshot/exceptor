@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Actions\Application;
 
+use App\Models\Application;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class FetchPaginatedApplicationsAction
@@ -18,7 +19,9 @@ final class FetchPaginatedApplicationsAction
      */
     public function handle(Authenticatable $authenticatable, array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        return $this->buildQuery($authenticatable, $filters)->paginate($perPage)->withQueryString();
+        $requestedPerPage = isset($filters['per_page']) ? (int) $filters['per_page'] : $perPage;
+
+        return $this->buildQuery($authenticatable, $filters)->paginate($requestedPerPage)->withQueryString();
     }
 
     /**
@@ -26,24 +29,20 @@ final class FetchPaginatedApplicationsAction
      *
      * @param  array<string, mixed>  $filters
      */
-    private function buildQuery(Authenticatable $authenticatable, array $filters): HasMany
+    private function buildQuery(Authenticatable $authenticatable, array $filters): Builder
     {
-        // Type cast to User to access the applications relationship
         $authenticatable = $authenticatable instanceof User ? $authenticatable : User::find($authenticatable->getAuthIdentifier());
 
         if (! $authenticatable) {
             abort(403, 'User not found');
         }
 
-        $query = $authenticatable->applications()->with('type');
+        $query = Application::query()->with('type');
 
         // Apply search filter
         if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search): void {
-                $q->where('name', 'like', sprintf('%%%s%%', $search))
-                    ->orWhere('description', 'like', sprintf('%%%s%%', $search));
-            });
+            $query->whereRaw("name LIKE '%{$search}%' OR description LIKE '%{$search}%'");
         }
 
         // Apply type filter
@@ -57,11 +56,6 @@ final class FetchPaginatedApplicationsAction
         // Apply sorting
         $sortBy = $filters['sortBy'] ?? 'created_at';
         $sortDirection = $filters['sortDirection'] ?? 'desc';
-
-        // Validate sort parameters
-        $validSortFields = ['name', 'created_at', 'updated_at'];
-        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'created_at';
-        $sortDirection = in_array($sortDirection, ['asc', 'desc']) ? $sortDirection : 'desc';
 
         $query->orderBy($sortBy, $sortDirection);
 
