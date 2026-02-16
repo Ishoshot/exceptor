@@ -28,14 +28,14 @@ final class FetchApplicationsAction
      */
     private function buildQuery(array $filters): Builder
     {
-        $builder = Application::with('type')
+        $builder = Application::query()->with('type')
             ->when(isset($filters['user_id']) && $filters['user_id'], fn ($query) => $query->where('user_id', $filters['user_id']))
             ->latest();
 
         // Apply search filter
         if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search): void {
+            $builder->where(function ($q) use ($search): void {
                 $q->where('name', 'like', sprintf('%%%s%%', $search))
                     ->orWhere('description', 'like', sprintf('%%%s%%', $search));
             });
@@ -49,14 +49,24 @@ final class FetchApplicationsAction
             });
         }
 
+        if (array_key_exists('hasWebhook', $filters) && is_bool($filters['hasWebhook'])) {
+            if ($filters['hasWebhook']) {
+                $builder->whereNotNull('webhook_url')->where('webhook_url', '!=', '');
+            } else {
+                $builder->where(function (Builder $query): void {
+                    $query->whereNull('webhook_url')->orWhere('webhook_url', '');
+                });
+            }
+        }
+
         // Apply sorting
         $sortBy = $filters['sortBy'] ?? 'created_at';
         $sortDirection = $filters['sortDirection'] ?? 'desc';
 
         // Validate sort parameters
         $validSortFields = ['name', 'created_at', 'updated_at'];
-        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'created_at';
-        $sortDirection = in_array($sortDirection, ['asc', 'desc']) ? $sortDirection : 'desc';
+        $sortBy = in_array($sortBy, $validSortFields, true) ? $sortBy : 'created_at';
+        $sortDirection = in_array($sortDirection, ['asc', 'desc'], true) ? $sortDirection : 'desc';
 
         $builder->orderBy($sortBy, $sortDirection);
 

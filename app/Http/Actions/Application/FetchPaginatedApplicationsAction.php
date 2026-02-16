@@ -54,14 +54,24 @@ final class FetchPaginatedApplicationsAction
             });
         }
 
+        if (array_key_exists('hasWebhook', $filters) && is_bool($filters['hasWebhook'])) {
+            if ($filters['hasWebhook']) {
+                $query->whereNotNull('webhook_url')->where('webhook_url', '!=', '');
+            } else {
+                $query->where(function ($builder): void {
+                    $builder->whereNull('webhook_url')->orWhere('webhook_url', '');
+                });
+            }
+        }
+
         // Apply sorting
         $sortBy = $filters['sortBy'] ?? 'created_at';
         $sortDirection = $filters['sortDirection'] ?? 'desc';
 
         // Validate sort parameters
         $validSortFields = ['name', 'created_at', 'updated_at'];
-        $sortBy = in_array($sortBy, $validSortFields) ? $sortBy : 'created_at';
-        $sortDirection = in_array($sortDirection, ['asc', 'desc']) ? $sortDirection : 'desc';
+        $sortBy = in_array($sortBy, $validSortFields, true) ? $sortBy : 'created_at';
+        $sortDirection = in_array($sortDirection, ['asc', 'desc'], true) ? $sortDirection : 'desc';
 
         $query->orderBy($sortBy, $sortDirection);
 

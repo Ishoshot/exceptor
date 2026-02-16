@@ -28,6 +28,8 @@ final class FilterApplicationRequest extends FormRequest
             'type' => 'nullable|string',
             'sortBy' => 'nullable|string|in:name,created_at,updated_at',
             'sortDirection' => 'nullable|string|in:asc,desc',
+            'hasWebhook' => 'nullable|boolean',
+            'perPage' => 'nullable|integer|min:5|max:100',
         ];
     }
 
@@ -43,6 +45,8 @@ final class FilterApplicationRequest extends FormRequest
             'type' => $this->input('type'),
             'sortBy' => $this->input('sortBy', 'created_at'),
             'sortDirection' => $this->input('sortDirection', 'desc'),
+            'hasWebhook' => $this->has('hasWebhook') ? $this->boolean('hasWebhook') : null,
+            'perPage' => (int) $this->input('perPage', 15),
         ];
     }
 
@@ -54,6 +58,7 @@ final class FilterApplicationRequest extends FormRequest
         $this->merge([
             'sortBy' => $this->input('sortBy', 'created_at'),
             'sortDirection' => $this->input('sortDirection', 'desc'),
+            'perPage' => $this->input('perPage', 15),
             'user_id' => auth()->id(),
         ]);
     }

@@ -63,14 +63,15 @@ final class ApplicationController
 
         // Get application types for filter dropdown
         $applicationTypes = ApplicationType::latest()->get();
+        $filters = $filterApplicationRequest->filters();
 
         // Fetch paginated applications with filters
-        $lengthAwarePaginator = $fetchPaginatedApplicationsAction->handle($user, $filterApplicationRequest->filters());
+        $lengthAwarePaginator = $fetchPaginatedApplicationsAction->handle($user, $filters, (int) $filters['perPage']);
 
         return Inertia::render('application/all-applications', [
             'applications' => $lengthAwarePaginator,
             'applicationTypes' => $applicationTypes,
-            'filters' => $filterApplicationRequest->filters(),
+            'filters' => $filters,
         ]);
     }
 
