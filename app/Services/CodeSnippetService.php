@@ -20,8 +20,7 @@ final class CodeSnippetService
      */
     public function getCodeSnippet(string $filePath, int $lineNumber): ?array
     {
-        // Check if file exists and is readable
-        if (! File::exists($filePath) || ! is_readable($filePath)) {
+        if (! File::exists($filePath)) {
             return null;
         }
 
@@ -30,7 +29,7 @@ final class CodeSnippetService
         $lines = explode("\n", $content);
 
         // Calculate the range of lines to show
-        $start = max(0, $lineNumber - $this->contextLines - 1);
+        $start = $lineNumber - $this->contextLines - 1;
         $end = min(count($lines) - 1, $lineNumber + $this->contextLines - 1);
 
         // Extract the relevant lines
@@ -77,6 +76,12 @@ final class CodeSnippetService
      */
     public function setContextLines(int $lines): self
     {
+        if ($lines > 1000) {
+            $this->contextLines = 1000;
+
+            return $this;
+        }
+
         $this->contextLines = $lines;
 
         return $this;

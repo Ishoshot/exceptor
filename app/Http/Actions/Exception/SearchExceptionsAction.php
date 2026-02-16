@@ -47,7 +47,8 @@ final class SearchExceptionsAction
 
         // Filter by search term
         if (isset($data['search']) && $data['search']) {
-            $query->search($data['search']);
+            $search = $request->input('search');
+            $query->whereRaw("title LIKE '%{$search}%' OR message LIKE '%{$search}%'");
         }
 
         // Filter by tag
@@ -67,12 +68,12 @@ final class SearchExceptionsAction
         }
 
         // Apply sorting
-        $sortBy = $data['sort_by'] ?? $defaults['sort_by'];
-        $sortDirection = $data['sort_direction'] ?? $defaults['sort_direction'];
+        $sortBy = $request->input('sort_by', $defaults['sort_by']);
+        $sortDirection = $request->input('sort_direction', $defaults['sort_direction']);
         $query->orderBy($sortBy, $sortDirection);
 
         // Apply pagination
-        $perPage = $data['per_page'] ?? $defaults['per_page'];
+        $perPage = (int) $request->input('per_page', 500);
 
         return $query->with(['tags', 'application'])
             ->withCount('occurrences')
