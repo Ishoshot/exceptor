@@ -7,7 +7,6 @@ namespace App\Http\Actions\Api\Webhook;
 use App\Http\Requests\Api\Webhook\HandleWebhookRequest;
 use App\Models\ApplicationException;
 use App\Models\ExceptionOccurrence;
-use Carbon\Carbon;
 
 final class StoreExceptionOccurrenceAction
 {
@@ -17,7 +16,7 @@ final class StoreExceptionOccurrenceAction
     public function handle(HandleWebhookRequest $request, ApplicationException $exception): ExceptionOccurrence
     {
         $data = $request->validated();
-        $timestamp = Carbon::parse($data['timestamp']);
+        $timestamp = now();
 
         return ExceptionOccurrence::create([
             'application_exception_id' => $exception->id,
@@ -25,7 +24,7 @@ final class StoreExceptionOccurrenceAction
             'user_data' => $data['user'] ?? null,
             'environment_data' => $data['environment'] ?? null,
             'breadcrumbs' => $data['breadcrumbs'] ?? null,
-            'metadata' => $this->generateMetadata($data),
+            'metadata' => array_merge($this->generateMetadata($data), ['raw' => $request->all()]),
             'occurred_at' => $timestamp,
         ]);
     }
