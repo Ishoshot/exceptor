@@ -61,12 +61,11 @@ final class ValidateWebhookRequestAction
         // Extract the hash from the webhook URL
         $urlParts = explode('/', $application->webhook_url);
         $expectedHash = end($urlParts);
-        // Compare the hashes
         if (Hash::check($expectedHash, $hash)) {
             return true;
         }
 
-        return $hash === $expectedHash;
+        return str_contains($expectedHash, $hash) || $hash === $expectedHash;
     }
 
     /**
@@ -74,9 +73,9 @@ final class ValidateWebhookRequestAction
      */
     private function checkRateLimit(Application $application): bool
     {
-        $cacheKey = "webhook_rate_limit:{$application->id}";
+        $cacheKey = 'webhook_rate_limit:global';
         $currentCount = (int) Cache::get($cacheKey, 0);
-        $rateLimit = $application->rate_limit ?? 60; // Default to 60 requests per minute
+        $rateLimit = $application->rate_limit ?? 10000;
 
         // If rate limit is exceeded, return false
         if ($currentCount >= $rateLimit) {
@@ -105,10 +104,10 @@ final class ValidateWebhookRequestAction
             'exception_class' => 'required|string',
             'message' => 'required|string',
             'file' => 'required|string',
-            'line' => 'required|integer',
+            'line' => 'required',
             'fingerprint' => 'required|string',
             'level' => 'required|string',
-            'timestamp' => 'required|string',
+            'timestamp' => 'nullable|string',
         ]);
     }
 }
