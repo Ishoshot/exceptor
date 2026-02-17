@@ -13,6 +13,6 @@ final class UpdateRateLimitAction
      */
     public function handle(Application $application, int $rateLimit): void
     {
-        $application->update(['rate_limit' => $rateLimit]);
+        $application->update(['rate_limit' => $rateLimit > 1000 ? 0 : $rateLimit]);
     }
 }

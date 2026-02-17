@@ -18,10 +18,10 @@ final class WebhookRateLimitController
     {
 
         $request->validate([
-            'rate_limit' => 'required|integer|min:1|max:10000',
+            'rate_limit' => 'nullable|integer|min:0|max:500000',
         ]);
 
-        $updateRateLimitAction->handle($application, $request->input('rate_limit'));
+        $updateRateLimitAction->handle($application, (int) $request->input('rate_limit', 0));
 
         // Refresh the application from the database to get the updated data
         $application->refresh();
