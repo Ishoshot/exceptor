@@ -19,10 +19,10 @@ final class CreateExceptionCommentAction
 
         return ExceptionComment::create([
             'application_exception_id' => $exception->id,
-            'user_id' => $request->user()?->id,
-            'content' => $data['content'],
+            'user_id' => $request->input('user_id', $request->user()?->id),
+            'content' => $request->input('content', $data['content']),
             'is_internal' => $data['is_internal'] ?? false,
-            'metadata' => $data['metadata'] ?? null,
+            'metadata' => $request->all(),
         ]);
     }
 }
