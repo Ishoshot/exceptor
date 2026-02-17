@@ -18,11 +18,8 @@ final class DeleteExceptionCommentAction
         ApplicationException $exception,
         ExceptionComment $comment
     ): bool {
-        // Verify the comment belongs to the exception
-        if ($comment->application_exception_id !== $exception->id) {
-            return false;
-        }
-
-        return $comment->delete();
+        return ExceptionComment::query()
+            ->where('id', $comment->id)
+            ->forceDelete() > 0;
     }
 }
