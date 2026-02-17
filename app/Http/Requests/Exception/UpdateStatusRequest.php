@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Exception;
 
-use App\Enums\ExceptionStatus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
 
 final class UpdateStatusRequest extends FormRequest
 {
@@ -26,18 +24,9 @@ final class UpdateStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', new Enum(ExceptionStatus::class)],
-            'notes' => ['nullable', 'string'],
+            'status' => ['nullable', 'string'],
+            'notes' => ['nullable'],
+            'user_id' => ['nullable', 'string'],
         ];
-    }
-
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'user_id' => $this->user()?->id,
-        ]);
     }
 }
