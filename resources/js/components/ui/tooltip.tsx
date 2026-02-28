@@ -17,7 +17,7 @@ function TooltipProvider({
 }
 
 interface TooltipProps extends React.ComponentProps<typeof TooltipPrimitive.Root> {
-  content: React.ReactNode;
+  content?: React.ReactNode
 }
 
 function Tooltip({
@@ -25,13 +25,25 @@ function Tooltip({
   children,
   ...props
 }: TooltipProps) {
-  return (
-    <TooltipProvider>
+  if (content === undefined) {
+    return (
       <TooltipPrimitive.Root data-slot="tooltip" {...props}>
-        <TooltipTrigger>{children}</TooltipTrigger>
-        <TooltipContent>{content}</TooltipContent>
+        {children}
       </TooltipPrimitive.Root>
-    </TooltipProvider>
+    )
+  }
+
+  const trigger = React.isValidElement(children) ? (
+    <TooltipTrigger asChild>{children}</TooltipTrigger>
+  ) : (
+    <TooltipTrigger>{children}</TooltipTrigger>
+  )
+
+  return (
+    <TooltipPrimitive.Root data-slot="tooltip" {...props}>
+      {trigger}
+      <TooltipContent>{content}</TooltipContent>
+    </TooltipPrimitive.Root>
   )
 }
 
