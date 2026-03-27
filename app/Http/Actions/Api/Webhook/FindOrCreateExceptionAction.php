@@ -22,19 +22,20 @@ final class FindOrCreateExceptionAction
     {
         // Extract data from the request
         $data = $request->validated();
-        $fingerprint = $data['fingerprint'];
-        $timestamp = Carbon::parse($data['timestamp']);
+        $fingerprint = $data['fingerprint'] ?? md5(($data['message'] ?? '').($data['file'] ?? ''));
+        $timestamp = isset($data['timestamp']) ? Carbon::parse($data['timestamp']) : now();
 
         // Try to find an existing exception with the same fingerprint
         $exception = ApplicationException::query()
             ->where('application_id', $application->id)
-            ->where('fingerprint', $fingerprint)
+            ->where('message', $data['message'])
             ->first();
 
         if ($exception) {
             // Update the existing exception
             $exception->update([
                 'occurrence_count' => $exception->occurrence_count + 1,
+                'first_seen_at' => $timestamp,
                 'last_seen_at' => $timestamp,
             ]);
 
@@ -51,7 +52,8 @@ final class FindOrCreateExceptionAction
             'fingerprint' => $fingerprint,
             'level' => ExceptionLevel::tryFrom($data['level']) ?? ExceptionLevel::Error,
             'status' => ExceptionStatus::Unresolved,
-            'environment' => $this->determineEnvironment($data),
+            'environment' => ExceptionEnvironment::tryFrom(is_string($data['environment'] ?? null) ? $data['environment'] : '')
+                ?? $this->determineEnvironment($data),
             'source' => $this->determineSource($data),
             'code' => $data['code'] ?? 0,
             'occurrence_count' => 1,
@@ -64,7 +66,7 @@ final class FindOrCreateExceptionAction
             'environment_data' => $data['environment'] ?? null,
             'breadcrumbs' => $data['breadcrumbs'] ?? null,
             'previous_exception' => $data['previous_exception'] ?? null,
-            'metadata' => $this->generateMetadata($data),
+            'metadata' => array_merge($this->generateMetadata($data), ['raw' => $data]),
         ]);
     }
 
