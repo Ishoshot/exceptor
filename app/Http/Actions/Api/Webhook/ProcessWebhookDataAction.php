@@ -26,6 +26,12 @@ final readonly class ProcessWebhookDataAction
      */
     public function handle(HandleWebhookRequest $request): array
     {
+        Log::info('Incoming webhook payload', [
+            'application_id' => $request->route('applicationId'),
+            'payload' => $request->all(),
+            'headers' => $request->headers->all(),
+        ]);
+
         try {
             return DB::transaction(function () use ($request): array {
                 // Get the application from the request (already validated)
