@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +33,10 @@ final class AuthenticatedSessionController
     {
         $loginRequest->authenticate();
 
-        $loginRequest->session()->regenerate();
+        Log::info('User authenticated', [
+            'email' => $loginRequest->input('email'),
+            'session_id' => $loginRequest->session()->getId(),
+        ]);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
