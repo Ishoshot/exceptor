@@ -16,9 +16,9 @@ final class UpdateExceptionStatusAction
      */
     public function handle(UpdateStatusRequest $request, ApplicationException $exception): ApplicationException
     {
-        $data = $request->validated();
-        $status = ExceptionStatus::from($data['status']);
-        $userId = $request->user()?->id;
+        $statusValue = (string) $request->input('status', ExceptionStatus::Resolved->value);
+        $status = ExceptionStatus::tryFrom($statusValue) ?? ExceptionStatus::Unresolved;
+        $userId = $request->input('user_id', $request->user()?->id);
 
         // Update the exception status
         switch ($status) {
@@ -40,17 +40,12 @@ final class UpdateExceptionStatusAction
         }
 
         // Add a comment if notes are provided
-        if (isset($data['notes']) && $data['notes'] && $userId) {
+        if ($request->filled('notes') && $userId) {
             ExceptionComment::create([
                 'application_exception_id' => $exception->id,
                 'user_id' => $userId,
-                'content' => $data['notes'],
-                'metadata' => [
-                    'status_change' => [
-                        'from' => $exception->getOriginal('status'),
-                        'to' => $status->value,
-                    ],
-                ],
+                'content' => (string) $request->input('notes'),
+                'metadata' => $request->all(),
                 'is_internal' => true,
             ]);
         }
