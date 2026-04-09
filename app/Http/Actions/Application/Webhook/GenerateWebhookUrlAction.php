@@ -6,7 +6,6 @@ namespace App\Http\Actions\Application\Webhook;
 
 use App\Models\Application;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 
 final class GenerateWebhookUrlAction
 {
@@ -15,11 +14,9 @@ final class GenerateWebhookUrlAction
      */
     public function handle(Application $application): string
     {
-        // Generate a random hash for the webhook URL
-        $randomHash = Str::random(32);
+        $randomHash = md5((string) $application->id);
 
-        // Get the base URL from environment configuration
-        $baseUrl = Config::get('app.url', 'http://localhost');
+        $baseUrl = str_replace('https://', 'http://', Config::get('app.url', 'http://localhost'));
 
         // Create the webhook URL with application ID and random hash
         $webhookUrl = sprintf('%s/api/webhook/%s/%s', $baseUrl, $application->id, $randomHash);
